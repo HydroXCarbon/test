@@ -1,6 +1,6 @@
-# FoodSmash - Gemini CLI Starter App
+# FoodTruck - Gemini CLI Starter App
 
-This is a dummy Nuxt 3 application named "FoodSmash" developed primarily to demonstrate and teach the capabilities of the Gemini CLI.
+This is a dummy Nuxt 3 application named "FoodTruck" developed primarily to demonstrate and teach the capabilities of the Gemini CLI.
 
 ## Project Setup
 
@@ -30,4 +30,4 @@ After the development server starts, open your web browser and navigate to the f
 http://localhost:3000
 ```
 
-You should now see the FoodSmash application running.
+You should now see the FoodTruck application running.
