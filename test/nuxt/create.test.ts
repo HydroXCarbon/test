@@ -12,7 +12,7 @@ describe('CreatePage', () => {
     await wrapper.find('#foodOne').setValue('Marmite')
     await wrapper.find('#foodTwo').setValue('Cheese')
     await wrapper.find('#description').setValue('A classic savory delight.')
-    await wrapper.find('#tags').setValue('savory, classic')
+    await wrapper.find('#tags').setValue('savory, classic,')
 
     await wrapper.find('form').trigger('submit.prevent')
 

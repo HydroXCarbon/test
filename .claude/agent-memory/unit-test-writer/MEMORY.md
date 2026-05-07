@@ -1,0 +1,1 @@
+- [FoodSmash Testing Conventions](project_testing_conventions.md) — mountSuspended pattern, import style, selector strategy, no shared wrappers
