@@ -88,6 +88,10 @@ const myCombos = [
         />
       </div>
     </section>
+
+    <section class="content-section">
+      <FollowSuggestions />
+    </section>
   </div>
 </template>
 
