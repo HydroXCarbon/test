@@ -36,7 +36,7 @@ const recentCombos = [
   <div class="dashboard-page">
     <div class="dashboard-header">
       <h1 class="section-title">Dashboard</h1>
-      <p class="dashboard-subtitle">Your FoodSmash at a glance.</p>
+      <p class="dashboard-subtitle">Your PviewLoveChelsea at a glance.</p>
     </div>
 
     <div class="stats-grid">
