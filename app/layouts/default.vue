@@ -1,7 +1,7 @@
 <template>
   <div class="layout">
     <nav class="global-nav">
-      <NuxtLink to="/" class="nav-logo">FoodSmash</NuxtLink>
+      <NuxtLink to="/" class="nav-logo">PviewLoveChelsea</NuxtLink>
       <NuxtLink to="/">Home</NuxtLink>
       <NuxtLink to="/dashboard">Dashboard</NuxtLink>
       <NuxtLink to="/create">Create</NuxtLink>
@@ -18,7 +18,7 @@
       <div class="footer-content">
         <div class="footer-sections">
           <div class="footer-section">
-            <h4 class="footer-title">FoodSmash</h4>
+            <h4 class="footer-title">PviewLoveChelsea</h4>
             <p>The perfect pair for your plate.</p>
           </div>
           <div class="footer-section">
@@ -28,7 +28,7 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <p>&copy; 2026 FoodSmash Inc. All rights reserved.</p>
+          <p>&copy; 2026 PviewLoveChelsea Inc. All rights reserved.</p>
           <div class="footer-links">
             <span>Privacy Policy</span>
             <span>Terms of Use</span>
