@@ -1,0 +1,113 @@
+# ============================================================
+# STAGE 1: METADATA
+# This name shows up in the Actions tab and on PR check rows.
+# ============================================================
+name: CI
+
+# ============================================================
+# STAGE 2: TRIGGERS
+# When should this workflow run?
+# ============================================================
+on:
+  # Run on every push to these branches
+  push:
+    branches: [develop, starter-project]
+
+  # Run on every PR targeting these branches
+  pull_request:
+    branches: [develop, starter-project]
+
+  # Allow a manual "Run workflow" button in the Actions UI
+  workflow_dispatch:
+
+# ============================================================
+# STAGE 3: CONCURRENCY
+# If a new commit lands on the same branch/PR while a previous
+# run is still going, cancel the older one. Saves CI minutes.
+# ============================================================
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ============================================================
+# STAGE 4: PERMISSIONS
+# Least-privilege scoping for the GITHUB_TOKEN.
+# Read-only is enough for a lint/test/build pipeline.
+# ============================================================
+permissions:
+  contents: read
+
+# ============================================================
+# STAGE 5: JOBS
+# Two jobs run in parallel: "test" and "build".
+# Each job is an isolated VM ("runner") that boots fresh.
+# ============================================================
+jobs:
+
+  # ----------------------------------------------------------
+  # JOB A: Run the Vitest suite
+  # ----------------------------------------------------------
+  test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # STEP 1: Pull the repo onto the runner
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # STEP 2: Install Node.js + cache npm modules between runs
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # STEP 3: Reproducible install from package-lock.json
+      - name: Install dependencies
+        run: npm ci
+
+      # STEP 4: TypeScript check (Nuxt's prepare step generates types first)
+      - name: Generate Nuxt types
+        run: npx nuxt prepare
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      # STEP 5: Run the Vitest test suite
+      - name: Run tests
+        run: npm test
+
+  # ----------------------------------------------------------
+  # JOB B: Make sure the production build still works
+  # ----------------------------------------------------------
+  build:
+    name: Production Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Nuxt app
+        run: npm run build
+
+      # STEP: Save the build output so you can download it from
+      # the workflow run page (useful for debugging or deploys).
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuxt-build-${{ github.sha }}
+          path: .output/
+          retention-days: 7
