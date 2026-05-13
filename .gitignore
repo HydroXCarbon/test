@@ -24,3 +24,7 @@ logs
 !.env.example
 .gemini/
 gha-creds-*.json
+
+# Lighthouse reports (large JSON files — results.tsv is kept)
+lighthouse/runs/*.json
+lighthouse/latest.json

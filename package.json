@@ -8,7 +8,9 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "test": "vitest"
+    "test": "vitest",
+    "lh": "node lighthouse/scripts/run.mjs",
+    "lh:dash": "npx serve lighthouse -p 4000"
   },
   "dependencies": {
     "lucide-vue-next": "^0.554.0",
@@ -19,7 +21,9 @@
   "devDependencies": {
     "@nuxt/test-utils": "^3.20.1",
     "@vue/test-utils": "^2.4.6",
+    "chrome-launcher": "^1.2.1",
     "happy-dom": "^20.0.10",
+    "lighthouse": "^13.3.0",
     "vitest": "^3.2.4"
   }
 }

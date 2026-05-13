@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lighthouse Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --surface2: #21262d;
+      --border:   #30363d;
+      --text:     #e6edf3;
+      --muted:    #8b949e;
+      --green:    #0cce6b;
+      --orange:   #ffa400;
+      --red:      #ff4e42;
+      --blue:     #58a6ff;
+      --purple:   #bc8cff;
+      --radius:   8px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    #app { max-width: 1400px; margin: 0 auto; }
+
+    /* ── Header ─────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .header-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .run-hint {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .run-hint code {
+      background: var(--surface2);
+      padding: 2px 7px;
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    .refresh-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 13px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+    .refresh-btn:hover { background: #2d333b; }
+
+    /* ── Empty state ─────────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 80px 24px;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state h2 { font-size: 20px; color: var(--text); margin-bottom: 8px; }
+    .empty-state p { margin-bottom: 12px; }
+    .code-block {
+      display: inline-block;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      text-align: left;
+      line-height: 2;
+      margin: 8px 0;
+    }
+    .mt { margin-top: 16px; }
+
+    /* ── Sections ────────────────────────────────────────── */
+    .section { margin-bottom: 32px; }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+    }
+
+    .title-badge {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 1px 7px;
+      border-radius: 10px;
+    }
+
+    /* ── Score gauges ────────────────────────────────────── */
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .score-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 12px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: border-color 0.15s;
+    }
+    .score-card:hover { border-color: #484f58; }
+
+    .score-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    /* ── Metric cards ────────────────────────────────────── */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+    }
+
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      transition: border-color 0.15s;
+    }
+    .metric-card:hover { border-color: #484f58; }
+
+    .metric-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .metric-abbr {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .metric-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .metric-dot.good     { background: var(--green); }
+    .metric-dot.moderate { background: var(--orange); }
+    .metric-dot.poor     { background: var(--red); }
+
+    .metric-value {
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .metric-value.good     { color: var(--green); }
+    .metric-value.moderate { color: var(--orange); }
+    .metric-value.poor     { color: var(--red); }
+
+    .metric-name {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+
+    .metric-bar {
+      margin-top: 10px;
+      height: 3px;
+      background: var(--surface2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .metric-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.6s ease;
+    }
+    .metric-bar-fill.good     { background: var(--green); }
+    .metric-bar-fill.moderate { background: var(--orange); }
+    .metric-bar-fill.poor     { background: var(--red); }
+
+    /* ── Charts ──────────────────────────────────────────── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .chart-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 16px;
+    }
+
+    .chart-wrap { position: relative; height: 200px; }
+
+    /* ── Opportunities ───────────────────────────────────── */
+    .opp-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .opp-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 13px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: border-color 0.15s;
+    }
+    .opp-item:hover { border-color: #484f58; }
+
+    .opp-rank {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      width: 18px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .opp-body { flex: 1; min-width: 0; }
+
+    .opp-title {
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .opp-desc {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .opp-savings {
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+      padding: 3px 10px;
+      border-radius: 12px;
+    }
+    .opp-savings.high   { background: rgba(255,78,66,.15);  color: var(--red); }
+    .opp-savings.medium { background: rgba(255,164,0,.15);  color: var(--orange); }
+    .opp-savings.low    { background: rgba(12,206,107,.12); color: var(--green); }
+
+    .opp-empty {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .opp-empty code {
+      background: var(--surface2);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    /* ── History table ───────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .history-table th {
+      background: var(--surface2);
+      color: var(--muted);
+      font-weight: 700;
+      text-align: left;
+      padding: 9px 13px;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.07em;
+    }
+
+    .history-table td {
+      padding: 10px 13px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .history-table tr:last-child td { border-bottom: none; }
+    .history-table tr:hover td { background: var(--surface2); }
+    .history-table tr.is-latest td { background: rgba(88,166,255,.04); }
+
+    .score-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 34px;
+      text-align: center;
+    }
+    .score-pill.good     { background: rgba(12,206,107,.14); color: var(--green); }
+    .score-pill.moderate { background: rgba(255,164,0,.14);  color: var(--orange); }
+    .score-pill.poor     { background: rgba(255,78,66,.14);  color: var(--red); }
+
+    .commit-tag {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      background: var(--surface2);
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: var(--blue);
+    }
+
+    .branch-tag { font-size: 12px; color: var(--purple); }
+    .note-tag   { font-size: 12px; color: var(--muted); font-style: italic; }
+    .ts-tag     { font-size: 12px; color: var(--muted); }
+
+    /* ── Auto-research banner ────────────────────────────── */
+    .ar-banner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .ar-banner strong { color: var(--text); }
+    .ar-banner code {
+      background: var(--surface2);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--blue);
+    }
+
+    /* ── Utility ─────────────────────────────────────────── */
+    .hidden { display: none !important; }
+
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .metric-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 900px) {
+      .score-grid  { grid-template-columns: repeat(2, 1fr); }
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      body { padding: 14px; }
+      .metric-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <header class="header">
+    <div>
+      <h1>⚡ Lighthouse Dashboard</h1>
+      <div class="header-meta" id="header-meta">Loading…</div>
+    </div>
+    <div class="header-right">
+      <span class="run-hint">Audit: <code>npm run lh</code></span>
+      <button class="refresh-btn" onclick="location.reload()">↻ Refresh</button>
+    </div>
+  </header>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="empty-state hidden">
+    <div class="empty-icon">⚡</div>
+    <h2>No audit data yet</h2>
+    <p>Start the dev server, then run your first audit:</p>
+    <code class="code-block">npm run dev<br>npm run lh</code>
+    <p class="mt">Then open this dashboard: <code>npm run lh:dash</code></p>
+  </div>
+
+  <!-- Main dashboard -->
+  <div id="dashboard" class="hidden">
+
+    <!-- Auto-research integration note -->
+    <div class="ar-banner" id="ar-banner">
+      <strong>auto-research compatible</strong> — primary metric: <strong>perf</strong> (higher is better).
+      Use <code>node lighthouse/scripts/run.mjs --note="run N"</code> in your experiment loop.
+      Results are appended to <code>lighthouse/results.tsv</code> automatically.
+    </div>
+
+    <!-- Category scores -->
+    <section class="section">
+      <h2 class="section-title">
+        Category Scores
+        <span class="title-badge" id="last-run-badge">latest run</span>
+      </h2>
+      <div class="score-grid" id="score-grid"></div>
+    </section>
+
+    <!-- Core Web Vitals -->
+    <section class="section">
+      <h2 class="section-title">Core Web Vitals</h2>
+      <div class="metric-grid" id="metric-grid"></div>
+    </section>
+
+    <!-- Trend charts -->
+    <section class="section">
+      <h2 class="section-title">Trends</h2>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title">Performance Score (0–100)</div>
+          <div class="chart-wrap"><canvas id="chart-perf"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Web Vitals — FCP · LCP · TBT (ms)</div>
+          <div class="chart-wrap"><canvas id="chart-vitals"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Opportunities -->
+    <section class="section">
+      <h2 class="section-title">Top Opportunities</h2>
+      <div id="opportunities-wrap"></div>
+    </section>
+
+    <!-- Run history -->
+    <section class="section">
+      <h2 class="section-title">
+        Run History
+        <span class="title-badge" id="run-count-badge">0 runs</span>
+      </h2>
+      <div class="table-wrap">
+        <table class="history-table" id="history-table"></table>
+      </div>
+    </section>
+
+  </div><!-- /dashboard -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════
+//  Constants
+// ═══════════════════════════════════════════════
+const THRESHOLDS = {
+  fcp_ms: { good: 1800,  moderate: 3000 },
+  lcp_ms: { good: 2500,  moderate: 4000 },
+  tbt_ms: { good: 200,   moderate: 600  },
+  cls:    { good: 0.1,   moderate: 0.25 },
+  si_ms:  { good: 3400,  moderate: 5800 },
+  tti_ms: { good: 3800,  moderate: 7300 },
+};
+
+const METRIC_META = {
+  fcp_ms: { label: 'FCP', name: 'First Contentful Paint',   fmt: 's'   },
+  lcp_ms: { label: 'LCP', name: 'Largest Contentful Paint', fmt: 's'   },
+  tbt_ms: { label: 'TBT', name: 'Total Blocking Time',      fmt: 'ms'  },
+  cls:    { label: 'CLS', name: 'Cumulative Layout Shift',   fmt: 'cls' },
+  si_ms:  { label: 'SI',  name: 'Speed Index',               fmt: 's'   },
+  tti_ms: { label: 'TTI', name: 'Time to Interactive',       fmt: 's'   },
+};
+
+const CATEGORIES = [
+  { key: 'perf', label: 'Performance'    },
+  { key: 'a11y', label: 'Accessibility'  },
+  { key: 'bp',   label: 'Best Practices' },
+  { key: 'seo',  label: 'SEO'            },
+];
+
+// ═══════════════════════════════════════════════
+//  Helpers
+// ═══════════════════════════════════════════════
+function grade(score) {
+  return score >= 90 ? 'good' : score >= 50 ? 'moderate' : 'poor';
+}
+
+function gradeMetric(value, key) {
+  const t = THRESHOLDS[key];
+  if (!t) return 'good';
+  if (value <= t.good) return 'good';
+  if (value <= t.moderate) return 'moderate';
+  return 'poor';
+}
+
+function fmtMetric(value, key) {
+  const m = METRIC_META[key];
+  if (!m) return value;
+  if (m.fmt === 's')   return (value / 1000).toFixed(1) + 's';
+  if (m.fmt === 'ms')  return value + 'ms';
+  if (m.fmt === 'cls') return parseFloat(value).toFixed(3);
+  return value;
+}
+
+function metricBarPct(value, key) {
+  const t = THRESHOLDS[key];
+  if (!t) return 100;
+  const max = t.moderate * 2;
+  return Math.min(100, Math.max(4, (value / max) * 100));
+}
+
+function parseTs(ts) {
+  if (!ts) return new Date(0);
+  const [date, time = ''] = ts.split('T');
+  return new Date(`${date}T${time.replace(/-/g, ':')}`);
+}
+
+function fmtTs(ts) {
+  const d = parseTs(ts);
+  if (isNaN(d)) return ts;
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
+    ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
+function gauge(score) {
+  const r = 54, cx = 64, cy = 64, sw = 10;
+  const circ = 2 * Math.PI * r;
+  const fill = (Math.min(100, Math.max(0, score)) / 100) * circ;
+  const color = score >= 90 ? '#0cce6b' : score >= 50 ? '#ffa400' : '#ff4e42';
+  return `<svg viewBox="0 0 128 128" width="96" height="96" role="img" aria-label="Score ${score}">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#21262d" stroke-width="${sw}"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}"
+      stroke-dasharray="${fill.toFixed(2)} ${(circ - fill).toFixed(2)}"
+      transform="rotate(-90 ${cx} ${cy})" stroke-linecap="round"/>
+    <text x="${cx}" y="${cy + 11}" text-anchor="middle" font-size="30" font-weight="700"
+      fill="${color}" font-family="system-ui,sans-serif">${score}</text>
+  </svg>`;
+}
+
+// ═══════════════════════════════════════════════
+//  Data loading
+// ═══════════════════════════════════════════════
+async function loadTSV() {
+  try {
+    const r = await fetch('./results.tsv', { cache: 'no-store' });
+    if (!r.ok) return [];
+    const text = await r.text();
+    const lines = text.trim().split('\n').filter(Boolean);
+    if (lines.length < 2) return [];
+    const headers = lines[0].split('\t');
+    return lines.slice(1).map(line => {
+      const vals = line.split('\t');
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = vals[i] ?? ''; });
+      for (const k of ['perf','a11y','bp','seo','fcp_ms','lcp_ms','tbt_ms','si_ms','tti_ms']) {
+        obj[k] = parseInt(obj[k], 10) || 0;
+      }
+      obj.cls = parseFloat(obj.cls) || 0;
+      return obj;
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function loadLatest() {
+  try {
+    const r = await fetch('./latest.json', { cache: 'no-store' });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch {
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  Renderers
+// ═══════════════════════════════════════════════
+function renderScoreCards(latest) {
+  document.getElementById('score-grid').innerHTML = CATEGORIES.map(({ key, label }) =>
+    `<div class="score-card">
+      ${gauge(latest[key] ?? 0)}
+      <div class="score-label">${label}</div>
+    </div>`
+  ).join('');
+}
+
+function renderMetricCards(latest) {
+  document.getElementById('metric-grid').innerHTML = Object.entries(METRIC_META).map(([key, meta]) => {
+    const val = latest[key] ?? 0;
+    const g   = gradeMetric(val, key);
+    const pct = metricBarPct(val, key);
+    return `<div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-abbr">${meta.label}</span>
+        <span class="metric-dot ${g}"></span>
+      </div>
+      <div class="metric-value ${g}">${fmtMetric(val, key)}</div>
+      <div class="metric-name">${meta.name}</div>
+      <div class="metric-bar">
+        <div class="metric-bar-fill ${g}" style="width:${pct.toFixed(1)}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCharts(rows) {
+  const data   = rows.slice(-20);
+  const labels = data.map(r => fmtTs(r.timestamp));
+  const ptR    = data.length > 10 ? 2 : 4;
+
+  Chart.defaults.color       = '#8b949e';
+  Chart.defaults.borderColor = '#30363d';
+  Chart.defaults.font.family = 'system-ui, sans-serif';
+  Chart.defaults.font.size   = 11;
+
+  const tooltip = {
+    backgroundColor: '#161b22',
+    borderColor: '#30363d',
+    borderWidth: 1,
+    titleColor: '#e6edf3',
+    bodyColor: '#8b949e',
+    padding: 10,
+  };
+
+  const xScale = {
+    grid: { color: '#21262d' },
+    ticks: { color: '#8b949e', maxRotation: 45, maxTicksLimit: 8 },
+  };
+  const yScale = { grid: { color: '#21262d' }, ticks: { color: '#8b949e' } };
+
+  // Performance score
+  new Chart(document.getElementById('chart-perf'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Perf',
+        data: data.map(r => r.perf),
+        borderColor: '#0cce6b',
+        backgroundColor: 'rgba(12,206,107,0.07)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: ptR,
+        pointHoverRadius: 6,
+        borderWidth: 2,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#8b949e', usePointStyle: true, padding: 14 } },
+        tooltip,
+      },
+      scales: {
+        x: xScale,
+        y: { ...yScale, min: 0, max: 100, ticks: { ...yScale.ticks, stepSize: 25 } },
+      },
+    },
+  });
+
+  // Web vitals
+  new Chart(document.getElementById('chart-vitals'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'FCP',
+          data: data.map(r => r.fcp_ms),
+          borderColor: '#58a6ff',
+          backgroundColor: 'transparent',
+          tension: 0.3,
+          pointRadius: ptR,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+        },
+        {
+          label: 'LCP',
+          data: data.map(r => r.lcp_ms),
+          borderColor: '#bc8cff',
+          backgroundColor: 'transparent',
+          tension: 0.3,
+          pointRadius: ptR,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+        },
+        {
+          label: 'TBT',
+          data: data.map(r => r.tbt_ms),
+          borderColor: '#ffa400',
+          backgroundColor: 'transparent',
+          tension: 0.3,
+          pointRadius: ptR,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#8b949e', usePointStyle: true, padding: 14 } },
+        tooltip,
+      },
+      scales: { x: xScale, y: yScale },
+    },
+  });
+}
+
+function renderOpportunities(lhr) {
+  const wrap = document.getElementById('opportunities-wrap');
+
+  if (!lhr) {
+    wrap.innerHTML = `<div class="opp-empty">
+      No <code>latest.json</code> found — run <code>npm run lh</code> to generate data.
+    </div>`;
+    return;
+  }
+
+  const opps = Object.values(lhr.audits)
+    .filter(a => a.details?.type === 'opportunity' && (a.numericValue ?? 0) > 0)
+    .sort((a, b) => (b.numericValue ?? 0) - (a.numericValue ?? 0))
+    .slice(0, 5);
+
+  if (!opps.length) {
+    wrap.innerHTML = `<div class="opp-empty">
+      🎉 No significant opportunities found — great performance!
+    </div>`;
+    return;
+  }
+
+  const savingsCls = (ms) => ms > 1000 ? 'high' : ms > 300 ? 'medium' : 'low';
+
+  wrap.innerHTML = `<div class="opp-list">${opps.map((a, i) => `
+    <div class="opp-item">
+      <span class="opp-rank">#${i + 1}</span>
+      <div class="opp-body">
+        <div class="opp-title">${a.title}</div>
+        ${a.description
+          ? `<div class="opp-desc">${a.description.replace(/ \[Learn more.*$/, '').replace(/\[.*?\]\(.*?\)/g, '')}</div>`
+          : ''}
+      </div>
+      <div class="opp-savings ${savingsCls(a.numericValue ?? 0)}">
+        est. ${a.displayValue || ((((a.numericValue ?? 0) / 1000)).toFixed(1) + 's')}
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderHistory(rows) {
+  const recent = [...rows].reverse().slice(0, 20);
+  document.getElementById('run-count-badge').textContent = `${rows.length} run${rows.length !== 1 ? 's' : ''}`;
+
+  const pill = (score) => `<span class="score-pill ${grade(score)}">${score}</span>`;
+
+  document.getElementById('history-table').innerHTML = `
+    <thead><tr>
+      <th>Time</th><th>Branch</th><th>Commit</th>
+      <th>Perf</th><th>A11y</th><th>BP</th><th>SEO</th>
+      <th>FCP</th><th>LCP</th><th>TBT</th><th>CLS</th>
+      <th>Note</th>
+    </tr></thead>
+    <tbody>${recent.map((r, i) => `
+      <tr${i === 0 ? ' class="is-latest"' : ''}>
+        <td class="ts-tag">${fmtTs(r.timestamp)}</td>
+        <td><span class="branch-tag">${r.branch || '—'}</span></td>
+        <td><span class="commit-tag">${r.commit || '—'}</span></td>
+        <td>${pill(r.perf)}</td>
+        <td>${pill(r.a11y)}</td>
+        <td>${pill(r.bp)}</td>
+        <td>${pill(r.seo)}</td>
+        <td>${fmtMetric(r.fcp_ms, 'fcp_ms')}</td>
+        <td>${fmtMetric(r.lcp_ms, 'lcp_ms')}</td>
+        <td>${fmtMetric(r.tbt_ms, 'tbt_ms')}</td>
+        <td>${r.cls.toFixed(3)}</td>
+        <td><span class="note-tag">${r.note || ''}</span></td>
+      </tr>`).join('')}
+    </tbody>`;
+}
+
+// ═══════════════════════════════════════════════
+//  Bootstrap
+// ═══════════════════════════════════════════════
+async function main() {
+  const [rows, lhr] = await Promise.all([loadTSV(), loadLatest()]);
+
+  if (!rows.length) {
+    document.getElementById('empty-state').classList.remove('hidden');
+    document.getElementById('header-meta').textContent = 'No runs recorded yet';
+    return;
+  }
+
+  document.getElementById('dashboard').classList.remove('hidden');
+
+  const latest = rows[rows.length - 1];
+  document.getElementById('header-meta').textContent =
+    `Last run: ${fmtTs(latest.timestamp)}  ·  ${latest.branch} @ ${latest.commit}  ·  ${rows.length} total run${rows.length !== 1 ? 's' : ''}`;
+  document.getElementById('last-run-badge').textContent = fmtTs(latest.timestamp);
+
+  renderScoreCards(latest);
+  renderMetricCards(latest);
+  renderCharts(rows);
+  renderOpportunities(lhr);
+  renderHistory(rows);
+}
+
+main().catch(err => {
+  document.getElementById('header-meta').textContent = 'Error loading data';
+  document.getElementById('app').insertAdjacentHTML('beforeend', `
+    <div class="empty-state">
+      <div class="empty-icon">⚠️</div>
+      <h2>Failed to load dashboard</h2>
+      <p style="color:#ff4e42">${err.message}</p>
+      <p class="mt">Make sure you opened this via <code>npm run lh:dash</code>, not directly as a file.</p>
+    </div>`);
+  console.error(err);
+});
+</script>
+</body>
+</html>
