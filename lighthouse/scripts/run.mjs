@@ -101,7 +101,7 @@ appendFileSync(tsvPath, row + '\n');
 
 // --- Summary ---
 const grade = (s) => (s >= 90 ? '🟢' : s >= 50 ? '🟡' : '🔴');
-const ms2s = (ms) => (ms / 1000).toFixed(1) + 's';
+const ms2s = (ms) => ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(3)}s`;
 
 console.log('Scores');
 console.log(`  ${grade(perf)}  Performance   ${perf}`);
