@@ -84,8 +84,8 @@ const recentCombos = [
 }
 
 .stat-card {
-  background: var(--color-surface, #181818);
-  border-radius: var(--radius-md, 8px);
+  background: var(--bg-surface);
+  border-radius: var(--rounded-md);
   padding: var(--spacing-lg);
   display: flex;
   flex-direction: column;
@@ -94,24 +94,24 @@ const recentCombos = [
 }
 
 .stat-card:hover {
-  box-shadow: var(--shadow-medium, rgba(0, 0, 0, 0.3) 0px 8px 8px);
+  box-shadow: var(--shadow-medium);
 }
 
 .stat-icon {
-  color: var(--color-primary, #1ed760);
+  color: var(--primary);
   margin-bottom: var(--spacing-xs);
 }
 
 .stat-value {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--text-base, #ffffff);
+  color: var(--text-base);
   line-height: 1;
 }
 
 .stat-label {
   font-size: 0.875rem;
-  color: var(--text-muted, #b3b3b3);
+  color: var(--text-muted);
 }
 
 .recent-section {
