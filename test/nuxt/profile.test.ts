@@ -21,7 +21,7 @@ describe('ProfilePage', () => {
   it('should render the avatar with correct initials', async () => {
     const wrapper = await mountSuspended(Profile);
     expect(wrapper.find('.avatar').text()).toBe('PP');
-  });v
+  });
 
   it('should render the location in the meta row', async () => {
     const wrapper = await mountSuspended(Profile);

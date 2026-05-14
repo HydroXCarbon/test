@@ -101,7 +101,7 @@ h1, h2, h3, h4 {
   font-size: 14px;
   font-weight: 700;
   margin-right: var(--spacing-xl);
-  transition: color 0.2s ease;
+  transition: color 0.1s ease;
 }
 
 .global-nav a:hover,
@@ -118,7 +118,7 @@ h1, h2, h3, h4 {
   border-radius: var(--rounded-full);
   border: none;
   cursor: pointer;
-  transition: transform 0.1s ease, background-color 0.2s ease;
+  transition: transform 0.05s ease, background-color 0.1s ease;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -163,7 +163,7 @@ h1, h2, h3, h4 {
   box-shadow: var(--shadow-inset);
   outline: none;
   width: 100%;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.1s ease;
 }
 
 .input-pill:hover {
